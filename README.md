@@ -5,7 +5,7 @@ A data validator with an idiomatic API
 # Example:
 
 ## Creating Discriminators:
-```
+```javascript
 var discriminate = require('discriminate');
 var { Required, Custom, Maybe, And, Or } = discriminate;
 
