@@ -1,5 +1,5 @@
 var discriminate = require('../');
-var { Required, Custom, Maybe, And, Or } = discriminate;
+var { Required, Custom, Maybe, And, Or, Any, List } = discriminate;
 var test = require('tape');
 
 test('native types', function(t){
@@ -216,6 +216,125 @@ test('Maybe', function(t){
         t.deepEqual(error, { message: 'Invalid data', errors: [
             { path: 'data.value', message: 'value must be a String or null, but saw `123`' },
         ] }, '');
+    });
+});
+
+test('Any', function(t){
+    t.plan(3);
+
+    var validator = discriminate('data', {
+        value: Any()
+    });
+
+    validator.validate({
+        value: 'abc',
+    }, function(error, result){
+        t.deepEqual(result, { value: 'abc' });
+    });
+
+    validator.validate({
+        value: null,
+    }, function(error, result){
+        t.deepEqual(result, { value: null });
+    });
+
+    validator.validate({
+        value: 123,
+    }, function(error, result){
+        t.deepEqual(result, { value: 123 });
+    });
+});
+
+test('List', function(t){
+    t.plan(2);
+
+    var validator = discriminate(List(Number));
+
+    validator.validate([
+        1
+    ], function(error, result){
+        t.deepEqual(result, [ 1 ]);
+    });
+
+    validator.validate([
+        '1'
+    ], function(error, result){
+        t.deepEqual(error, {
+          message: 'Invalid data',
+          errors: [ { path: '0', message: '0 must be a Number, but saw `"1"`' } ]
+        });
+    });
+});
+
+test('List - min length', function(t){
+    t.plan(2);
+
+    var validator = discriminate(List(Number, 3));
+
+    validator.validate([
+        1, 2, 3
+    ], function(error, result){
+        t.deepEqual(result, [ 1 ,2, 3 ], 'Valid list of Type passes');
+    });
+
+    validator.validate([
+        1, 2
+    ], function(error, result){
+        t.deepEqual(error, {
+          message: 'Invalid data',
+          errors: [ { path: null, message: 'value must be of minimum length 3, but length was 2' } ]
+        });
+    });
+});
+
+test('List - max length', function(t){
+    t.plan(2);
+
+    var validator = discriminate(List(Number, 0, 3));
+
+    validator.validate([
+        1, 2, 3
+    ], function(error, result){
+        t.deepEqual(result, [ 1 ,2, 3 ], 'Valid list of Type passes');
+    });
+
+    validator.validate([
+        1, 2, 3, 4
+    ], function(error, result){
+        t.deepEqual(error, {
+          message: 'Invalid data',
+          errors: [ { path: null, message: 'value must be of maximum length 3, but length was 4' } ]
+        });
+    });
+});
+
+test('List - min and max length', function(t){
+    t.plan(3);
+
+    var validator = discriminate(List(Number, 3, 3));
+
+    validator.validate([
+        1, 2, 3
+    ], function(error, result){
+        t.deepEqual(result, [ 1 ,2, 3 ], 'Valid list of Type passes');
+    });
+
+    validator.validate([
+        1, 2
+    ], function(error, result){
+        t.deepEqual(error, {
+          message: 'Invalid data',
+          errors: [ { path: null, message: 'value must be of minimum length 3, but length was 2' } ]
+        });
+    });
+
+    validator.validate([
+        1, 2, 3, 4
+    ], function(error, result){
+        t.deepEqual(error, {
+          message: 'Invalid data',
+          errors: [ { path: null, message: 'value must be of maximum length 3, but length was 4' } ]
+        });
     });
 });
 

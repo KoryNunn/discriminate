@@ -263,6 +263,68 @@ Or.prototype.validate = function(target, value, path, callback){
     result(callback);
 }
 
+function Any(){
+    if(!(this instanceof Any)){
+        return Any.apply(Object.create(Any.prototype), arguments);
+    }
+
+    return this;
+}
+Any.prototype = Object.create(Type.prototype);
+Any.prototype.constructor = Any;
+Any.prototype.validate = function(target, value, path, callback){
+    callback(null, value);
+}
+
+function List(type, minLength, maxLength){
+    if(!(this instanceof List)){
+        return List.apply(Object.create(List.prototype), arguments);
+    }
+
+    this.type = type;
+    this.minLength = minLength || 0;
+    this.maxLength = maxLength || Infinity;
+    return this;
+}
+List.prototype = Object.create(Type.prototype);
+List.prototype.constructor = List;
+List.prototype.print = function(){
+    return `${this.constructor.name}(${printType(this.type)}), minimum length: ${this.minLength}, maximum length: ${this.maxLength}`;
+}
+List.prototype.validate = function(target, value, path, callback){
+    var type = this.type;
+    if(!Array.isArray(value)){
+        return callback({
+            path: path[0],
+            message: `${path[1] || 'value'} must be an array, but saw \`${JSON.stringify(value)}\``
+        })
+    }
+
+    if(value.length < this.minLength){
+        return callback({
+            path: path[0],
+            message: `${path[1] || 'value'} must be of minimum length ${this.minLength}, but length was ${value.length}`
+        })
+    }
+
+    if(value.length > this.maxLength){
+        return callback({
+            path: path[0],
+            message: `${path[1] || 'value'} must be of maximum length ${this.maxLength}, but length was ${value.length}`
+        })
+    }
+
+    var valid = righto.all(value.map((item, index) => {
+        var itemPath = [
+            buildPath(path[0], index),
+            index.toString()
+        ]
+        return righto(check, type, target, item, itemPath)
+    }))
+
+    valid(callback);
+}
+
 function discriminate(name, spec){
     if(arguments.length < 2){
         spec = name;
@@ -322,3 +384,5 @@ module.exports.Maybe = Maybe;
 module.exports.Custom = Custom;
 module.exports.And = And;
 module.exports.Or = Or;
+module.exports.Any = Any;
+module.exports.List = List;

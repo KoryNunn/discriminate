@@ -74,3 +74,11 @@ The value returned from `fn` will be the result of the type instansiation.
 ## `Required(Type)`
 
 Prints a nicer error if a value is null or undefined, eg: 'age is required.'
+
+## `Any()`
+
+Allow any value
+
+## `List(Type, minLength<optional>, maxLength<optional>)`
+
+Ensures a value is an array where each item matches `Type`.
