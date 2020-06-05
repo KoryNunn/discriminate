@@ -338,6 +338,42 @@ test('List - min and max length', function(t){
     });
 });
 
+test('List of objects', function(t){
+    t.plan(1);
+
+    var validator = discriminate(List({
+        foo: String
+    }));
+
+    validator.validate([
+        { foo: 'bar' },
+        { foo: 'baz' }
+    ], function(error, result){
+        t.deepEqual(result, [
+            { foo: 'bar' },
+            { foo: 'baz' }
+        ]);
+    });
+});
+
+test('List of objects with errors', function(t){
+    t.plan(1);
+
+    var validator = discriminate(List({
+        foo: String
+    }));
+
+    validator.validate([
+        { foo: 'bar' },
+        { foo: 1 }
+    ], function(error){
+        t.deepEqual(error, {
+          message: 'Invalid data',
+          errors: [ { path: '1.foo', message: 'foo must be a String, but saw `1`' } ]
+        });
+    });
+});
+
 test('Sub Spec', function(t){
     t.plan(2);
 
