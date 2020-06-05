@@ -315,12 +315,20 @@ List.prototype.validate = function(target, value, path, callback){
     }
 
     var valid = righto.all(value.map((item, index) => {
-        var itemPath = [
-            buildPath(path[0], index),
-            index.toString()
-        ]
-        return righto(check, type, target, item, itemPath)
-    }))
+        var itemPath = buildPath(path[0], index)
+        return righto.surely((type && type instanceof SubSpec)
+            ? righto(type, itemPath, item)
+            : righto(discriminate(itemPath, type), item)
+        )
+    })).get(results => {
+        var errors = results.map(result => result[0] && result[0].errors).filter(error => error);
+
+        if(errors.length){
+            return righto.fail(errors)
+        }
+
+        return results.map(result => result[1]);
+    })
 
     valid(callback);
 }
@@ -362,7 +370,7 @@ function discriminate(name, spec){
 
         if(spec instanceof Type){
             return spec.validate({}, data, path, function(error, result){
-                return done(error && [error], result);
+                return done(error && flatten([error]), result);
             });
         }
 
