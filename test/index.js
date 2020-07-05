@@ -1,5 +1,5 @@
 var discriminate = require('../');
-var { Required, Custom, Maybe, And, Or, Any, List } = discriminate;
+var { Required, Custom, Maybe, And, Or, Any, List, Cast } = discriminate;
 var test = require('tape');
 
 test('native types', function(t){
@@ -370,6 +370,27 @@ test('List of objects with errors', function(t){
         t.deepEqual(error, {
           message: 'Invalid data',
           errors: [ { path: '1.foo', message: 'foo must be a String, but saw `1`' } ]
+        });
+    });
+});
+
+test('Cast', function(t){
+    t.plan(3);
+
+    var validator = discriminate(Cast(Number));
+
+    validator.validate(1, function(error, result){
+        t.deepEqual(result, 1);
+    });
+
+    validator.validate('1', function(error, result){
+        t.deepEqual(result, 1);
+    })
+
+    validator.validate(false, function(error, result){
+        t.deepEqual(error, {
+          message: 'Invalid data',
+          errors: [ { path: null, message: 'value must be castable to Number, but saw `false`' } ]
         });
     });
 });

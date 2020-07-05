@@ -333,6 +333,81 @@ List.prototype.validate = function(target, value, path, callback){
     valid(callback);
 }
 
+var casts = {
+    'String': (value, path, callback) => {
+        if(value && value instanceof Object){
+            return callback({
+                path: path[0],
+                message: `${path[1] || 'value'} must be castable to String, but saw \`${JSON.stringify(value)}\``
+            })
+        }
+        return callback(null, String(value));
+    },
+    'Number': (value, path, callback) => {
+        if(typeof value === 'number'){
+            return callback(null, value);
+        }
+
+        var result = Number(value);
+
+        if(result != String(value) || isNaN(result)){
+            return callback({
+                path: path[0],
+                message: `${path[1] || 'value'} must be castable to Number, but saw \`${JSON.stringify(value)}\``
+            })
+        }
+
+        return callback(null, result);
+    },
+    'Boolean': (value, path, callback) => {
+        var type = typeof value;
+
+        if(type === 'boolean'){
+            return callback(null, value);
+        }
+
+        if(type === 'string' && value === 'true' || value === 'false'){
+            return callback(null, value === 'true');
+        }
+
+        if(type === 'number' && value === 0 || value === 1){
+            return callback(null, value !== 0);
+        }
+
+        callback({
+            path: path[0],
+            message: `${path[1] || 'value'} must be castable to Boolean, but saw \`${JSON.stringify(value)}\``
+        })
+    }
+}
+
+function Cast(baseOrSourceType, targetType, customConverter){
+    if(!customConverter && !isBaseType(baseOrSourceType)){
+        throw new Error(`Only BaseTypes (${Object.keys(constructors)}) can be cast to`);
+    }
+
+    if(arguments.length === 2){
+        throw new Error(`Cast can only be either Cast(targetBaseType) OR Cast(sourceType, targetType, customConverter)`);
+    }
+
+    if(!(this instanceof Cast)){
+        return new Cast(baseOrSourceType, targetType, customConverter);
+    }
+
+    this.targetType = targetType;
+    this.baseOrSourceType = baseOrSourceType;
+    this.customConverter = customConverter;
+    return this;
+}
+Cast.prototype = Object.create(Type.prototype);
+Cast.prototype.constructor = Cast;
+Cast.prototype.print = function(){
+    return `${this.constructor.name}(${printType(this.type)}), minimum length: ${this.minLength}, maximum length: ${this.maxLength}`;
+}
+Cast.prototype.validate = function(target, value, path, callback){
+    casts[this.baseOrSourceType.name](value, path, callback);
+}
+
 function discriminate(name, spec){
     if(arguments.length < 2){
         spec = name;
@@ -394,3 +469,4 @@ module.exports.And = And;
 module.exports.Or = Or;
 module.exports.Any = Any;
 module.exports.List = List;
+module.exports.Cast = Cast;
