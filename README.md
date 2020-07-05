@@ -45,7 +45,7 @@ function greetUser(maybeNotAValidUser){
 
 ```
 
-# Available base types:
+# Available base types (BaseType):
 
 value type constructors are valid, eg:
 
@@ -82,3 +82,7 @@ Allow any value
 ## `List(Type, minLength<optional>, maxLength<optional>)`
 
 Ensures a value is an array where each item matches `Type`.
+
+## `Cast(BaseType)`
+
+Casts a value to a `BaseType`.
